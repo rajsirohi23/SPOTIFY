@@ -3,8 +3,6 @@ let currentSong = new Audio;
 let songs;
 let currFolder;
 
-
-
 function secondsToMinutesSeconds(seconds) {
     if (isNaN(seconds) || seconds < 0) {
         return "00:00";
@@ -19,11 +17,9 @@ function secondsToMinutesSeconds(seconds) {
     return `${formattedMinutes}:${formattedSeconds}`;
 }
 
-
-
 async function getSongs(folder) {
     currFolder = folder;
-    let a = await fetch(`/${folder}/`)
+    let a = await fetch(`/public/${folder}/`)
     let response = await a.text();
     let div = document.createElement("div")
     div.innerHTML = response;
@@ -32,60 +28,50 @@ async function getSongs(folder) {
     for (let index = 0; index < as.length; index++) {
         const element = as[index];
         if (element.href.endsWith(".mp3")) {
-            songs.push(element.href.split(`/${folder}/`)[1])
+            songs.push(element.href.split(`/public/${folder}/`)[1])
         }
     }
 
     let songUL = document.querySelector(".songList").getElementsByTagName("ul")[0]
     songUL.innerHTML = ""
     for (const song of songs) {
-        songUL.innerHTML = songUL.innerHTML + `<li><img class="invert" width="34" src="img/music.svg" alt="">
+        songUL.innerHTML = songUL.innerHTML + `<li><img class="invert" width="34" src="public/img/music.svg" alt="">
         <div class="info">
             <div> ${song.replaceAll("%20", " ")}</div>
             <div>Harry</div>
         </div>
         <div class="playnow">
             <span>Play Now</span>
-            <img class="invert" src="img/play.svg" alt="">
+            <img class="invert" src="public/img/play.svg" alt="">
         </div> </li>`;;
     }
-
-
 
     //Attach an event listner to each song
     Array.from(document.querySelector(".songList").getElementsByTagName("li")).forEach(e => {
         e.addEventListener("click", element => {
-
             console.log(e.querySelector(".info").firstElementChild.innerHTML)
             playMusic(e.querySelector(".info").firstElementChild.innerHTML.trim())
-
-
         })
     })
 
     return songs
-
 }
 
 const playMusic = (track, pause = false) => {
-    currentSong.src = `/${currFolder}/` + track
+    currentSong.src = `/public/${currFolder}/` + track
     if (!pause) {
         currentSong.play()
-        play.src = "img/pause.svg"
+        play.src = "public/img/pause.svg"
     }
-
 
     document.querySelector(".songinfo").innerHTML = decodeURI(track)
     document.querySelector(".songtime").innerHTML = "00:00 / 00:00"
-
-
-
 }
 
 async function displayAlbums() {
     console.log("displaying albums");
     try {
-        let a = await fetch(`http://127.0.0.1:5500/songs/`);
+        let a = await fetch(`/public/songs/`);
         if (!a.ok) {
             throw new Error(`HTTP error! status: ${a.status}`);
         }
@@ -106,7 +92,7 @@ async function displayAlbums() {
         let array = Array.from(anchors);
         const uniqueFolders = new Set(); // Use a Set to ensure uniqueness
         const folderPromises = array
-            .filter((e) => e.href.includes("/songs"))
+            .filter((e) => e.href.includes("/public/songs"))
             .map(async (e) => {
                 console.log("href:", e.href);
                 let folder = e.href.split("/").filter(part => part !== "").slice(-1)[0];
@@ -118,7 +104,7 @@ async function displayAlbums() {
                 }
                 uniqueFolders.add(folder);
 
-                let infoUrl = `http://127.0.0.1:5500/songs/${folder}/info.json`;
+                let infoUrl = `/public/songs/${folder}/info.json`;
                 try {
                     let infoResponse = await fetch(infoUrl);
                     if (!infoResponse.ok) {
@@ -148,7 +134,7 @@ async function displayAlbums() {
                             <polygon points="35,25 75,50 35,75" fill="black" />
                         </svg>
                     </div>
-                    <img src="/songs/${folder}/cover.jpg" alt="">
+                    <img src="/public/songs/${folder}/cover.jpg" alt="">
                     <h2>${info.title}</h2>
                     <p>${info.description}</p>
                 `;
@@ -179,9 +165,6 @@ if (document.readyState === 'loading') {
     displayAlbums(); // DOMContentLoaded already fired
 }
 
-
-
-
 async function main() {
     await getSongs("songs/cs");
     playMusic(songs[0], true);
@@ -189,10 +172,10 @@ async function main() {
     play.addEventListener("click", () => {
         if (currentSong.paused) {
             currentSong.play();
-            play.src = "img/pause.svg";
+            play.src = "public/img/pause.svg";
         } else {
             currentSong.pause();
-            play.src = "img/play.svg";
+            play.src = "public/img/play.svg";
         }
     });
 
@@ -238,17 +221,17 @@ async function main() {
         console.log("Setting volume to", e.target.value, "/ 100");
         currentSong.volume = parseInt(e.target.value) / 100;
         if (currentSong.volume > 0) {
-            document.querySelector(".volume>img").src = document.querySelector(".volume>img").src.replace("img/mute.svg", "img/volume.svg");
+            document.querySelector(".volume>img").src = document.querySelector(".volume>img").src.replace("public/img/mute.svg", "public/img/volume.svg");
         }
     });
 
     document.querySelector(".volume>img").addEventListener("click", e => {
-        if (e.target.src.includes("img/volume.svg")) {
-            e.target.src = e.target.src.replace("img/volume.svg", "img/mute.svg");
+        if (e.target.src.includes("public/img/volume.svg")) {
+            e.target.src = e.target.src.replace("public/img/volume.svg", "public/img/mute.svg");
             currentSong.volume = 0;
             document.querySelector(".range").getElementsByTagName("input")[0].value = 0;
         } else {
-            e.target.src = e.target.src.replace("img/mute.svg", "img/volume.svg");
+            e.target.src = e.target.src.replace("public/img/mute.svg", "public/img/volume.svg");
             currentSong.volume = 0.1;
             document.querySelector(".range").getElementsByTagName("input")[0].value = 50;
         }
@@ -260,7 +243,39 @@ function displayUsername() {
     const username = localStorage.getItem("username");
     if (username) {
         const userProfile = document.querySelector(".user-profile");
-        userProfile.innerHTML = `<div class="user-circle">${username.charAt(0).toUpperCase()}</div><div class="user-name">${username}</div><button id="logoutButton">Logout</button>`;
+        userProfile.innerHTML = `<div class="user-circle">${username.charAt(0).toUpperCase()}</div><div class="user-name">${username}</div>`;
+        const logoutDiv = document.createElement('div');
+        logoutDiv.id = 'logout-popup';
+        logoutDiv.innerHTML = `<button id="logoutButton">Logout</button>`;
+        logoutDiv.style.display = 'none';
+
+        // Minimal styling for the popup div
+        logoutDiv.style.position = 'absolute';
+        logoutDiv.style.right = '0';
+        logoutDiv.style.top = '100%'; // Place below username
+        logoutDiv.style.zIndex = '10';
+        logoutDiv.style.padding = '5px 0px'; // Reduced padding
+
+        const logoutButton = logoutDiv.querySelector('#logoutButton');
+        logoutButton.style.backgroundColor = '#1DB954'; // Spotify green
+        logoutButton.style.color = 'white';
+        logoutButton.style.border = 'none';
+        logoutButton.style.padding = '5px 10px'; // Reduced button padding
+        logoutButton.style.borderRadius = '3px';
+        logoutButton.style.cursor = 'pointer';
+        logoutButton.style.fontSize = '14px';
+        logoutButton.style.transition = 'background-color 0.3s ease';
+
+        logoutButton.addEventListener('mouseover', () => {
+            logoutButton.style.backgroundColor = '#1ED760'; // Lighten on hover
+        });
+
+        logoutButton.addEventListener('mouseout', () => {
+            logoutButton.style.backgroundColor = '#1DB954';
+        });
+
+        userProfile.appendChild(logoutDiv);
+
         const loginButton = document.querySelector(".loginbtn");
         const signupButton = document.querySelector(".signupbtn");
         if (loginButton && signupButton) {
@@ -268,7 +283,11 @@ function displayUsername() {
             signupButton.style.display = "none";
         }
 
-        // Add event listener to the logout button
+        userProfile.addEventListener('click', () => {
+            const logoutPopup = document.getElementById('logout-popup');
+            logoutPopup.style.display = logoutPopup.style.display === 'block' ? 'none' : 'block';
+        });
+
         document.getElementById("logoutButton").addEventListener("click", logout);
     }
 }
@@ -329,62 +348,3 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 main();
-
-
-// ... (Your other JavaScript code) ...
-
-// Function to display username if logged in
-function displayUsername() {
-    const username = localStorage.getItem("username");
-    if (username) {
-        const userProfile = document.querySelector(".user-profile");
-        userProfile.innerHTML = `<div class="user-circle">${username.charAt(0).toUpperCase()}</div><div class="user-name">${username}</div>`;
-        const logoutDiv = document.createElement('div');
-        logoutDiv.id = 'logout-popup';
-        logoutDiv.innerHTML = `<button id="logoutButton">Logout</button>`;
-        logoutDiv.style.display = 'none';
-
-        // Minimal styling for the popup div
-        logoutDiv.style.position = 'absolute';
-        logoutDiv.style.right = '0';
-        logoutDiv.style.top = '100%'; // Place below username
-        logoutDiv.style.zIndex = '10';
-        logoutDiv.style.padding = '5px 0px'; // Reduced padding
-
-        const logoutButton = logoutDiv.querySelector('#logoutButton');
-        logoutButton.style.backgroundColor = '#1DB954'; // Spotify green
-        logoutButton.style.color = 'white';
-        logoutButton.style.border = 'none';
-        logoutButton.style.padding = '5px 10px'; // Reduced button padding
-        logoutButton.style.borderRadius = '3px';
-        logoutButton.style.cursor = 'pointer';
-        logoutButton.style.fontSize = '14px';
-        logoutButton.style.transition = 'background-color 0.3s ease';
-
-        logoutButton.addEventListener('mouseover', () => {
-            logoutButton.style.backgroundColor = '#1ED760'; // Lighten on hover
-        });
-
-        logoutButton.addEventListener('mouseout', () => {
-            logoutButton.style.backgroundColor = '#1DB954';
-        });
-
-        userProfile.appendChild(logoutDiv);
-
-        const loginButton = document.querySelector(".loginbtn");
-        const signupButton = document.querySelector(".signupbtn");
-        if (loginButton && signupButton) {
-            loginButton.style.display = "none";
-            signupButton.style.display = "none";
-        }
-
-        userProfile.addEventListener('click', () => {
-            const logoutPopup = document.getElementById('logout-popup');
-            logoutPopup.style.display = logoutPopup.style.display === 'block' ? 'none' : 'block';
-        });
-
-        document.getElementById("logoutButton").addEventListener("click", logout);
-    }
-}
-
-
